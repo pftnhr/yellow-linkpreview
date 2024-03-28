@@ -1,0 +1,96 @@
+/* Linkpreview extension, https://github.com/pftnhr/yellow-linkpreview */
+
+.linkpreview {
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    color: var(--text);
+    display: flex;
+    font-size: 14px;
+    margin-top: 14px;
+    overflow: hidden;
+    position: relative;
+    text-decoration: none;
+}
+
+a.linkpreview {
+    cursor:pointer
+}
+
+a.linkpreview:active,
+a.linkpreview:focus,
+a.linkpreview:hover,
+a.linkpreview:active .linkpreview__content__description,
+a.linkpreview:active .linkpreview__content__url,
+a.linkpreview:active .linkpreview__content__title,
+a.linkpreview:focus .linkpreview__content__description,
+a.linkpreview:focus .linkpreview__content__url,
+a.linkpreview:focus .linkpreview__content__title,
+a.linkpreview:hover .linkpreview__content__description,
+a.linkpreview:hover .linkpreview__content__url,
+a.linkpreview:hover .linkpreview__content__title {
+    color: var(--text);
+    text-decoration: none;
+}
+
+
+.linkpreview__content {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.linkpreview__content__title {
+    color: #000;
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 500;
+    line-height: 24px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.linkpreview__content__description {
+    display: block;
+    margin-top: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space:nowrap
+}
+
+.linkpreview__content__host {
+    margin-bottom: 8px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.linkpreview__image {
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    position: relative;
+    width: 120px;
+}
+
+.linkpreview__image img {
+    background-position: 50%;
+    background-size: cover;
+    display: block;
+    height: 100% !important;
+    margin: 0;
+    -o-object-fit: cover;
+    object-fit: cover;
+    width: 100%;
+}
+
+.linkpreview__image,
+.linkpreview__image img {
+    border-end-end-radius: 0;
+    border-end-start-radius: 8px;
+    border-start-end-radius: 0;
+    border-start-start-radius: 8px;
+}

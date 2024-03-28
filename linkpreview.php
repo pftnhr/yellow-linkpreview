@@ -52,6 +52,7 @@ class YellowLinkpreview {
     }
     
     public function getLinkPreview($url) {
+        ini_set('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
         $html = file_get_contents($url);
         if ($html === false) {
             return array(); // Rückgabe eines leeren Arrays im Fehlerfall

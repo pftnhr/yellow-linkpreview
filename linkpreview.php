@@ -66,11 +66,11 @@ class YellowLinkpreview {
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
             CURLOPT_SSL_VERIFYPEER => false, // speed up
+            CURLOPT_USERAGENT => "Mozilla/5.0 (compatible; YellowLinkpreview " . YellowLinkpreview::VERSION . "; LinkChecker; +https://github.com/pftnhr/yellow-linkpreview) ",
             CURLOPT_USERAGENT=>$this->yellow->toolbox->getServer('HTTP_USER_AGENT'), // for paranoid servers
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_TIMEOUT => 30, // Timeout nach 30 Sekunden
-            // CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
         ]);
         $html = curl_exec($curl);
         curl_close($curl);

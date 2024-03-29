@@ -1,4 +1,4 @@
-# Linkpreview 0.8.16
+# Linkpreview 0.8.17
 
 Shows a link preview for selected links
 

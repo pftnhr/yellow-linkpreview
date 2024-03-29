@@ -2,7 +2,7 @@
 // Linkpreview extension, https://github.com/pftnhr/yellow-linkpreview
 
 class YellowLinkpreview {
-    const VERSION = "0.8.16";
+    const VERSION = "0.8.17";
     public $yellow;         // access to API
 
     // Handle initialisation
@@ -52,8 +52,29 @@ class YellowLinkpreview {
     }
     
     public function getLinkPreview($url) {
-        ini_set('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
-        $html = file_get_contents($url);
+        // Cache-Datei lesen
+        $cacheFile = $this->yellow->system->get("coreExtensionDirectory") . "linkpreview.json";
+        $previews = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : array();
+        
+        // Überprüfen, ob der Cache-Eintrag für die URL vorhanden ist und nicht abgelaufen ist
+        if (isset($previews[$url]) && time() - $previews[$url]['timestamp'] <= 86400) {
+            return $previews[$url];
+        }
+
+        // Mit cURL den HTML-Inhalt der URL abrufen
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_SSL_VERIFYPEER => false, // speed up
+            CURLOPT_USERAGENT=>$this->yellow->toolbox->getServer('HTTP_USER_AGENT'), // for paranoid servers
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 30, // Timeout nach 30 Sekunden
+            // CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        ]);
+        $html = curl_exec($curl);
+        curl_close($curl);
+    
         if ($html === false) {
             return array(); // Rückgabe eines leeren Arrays im Fehlerfall
         }
@@ -87,26 +108,79 @@ class YellowLinkpreview {
             }
         }
     
-        // Extrahiere das Schema und den Hostnamen aus der URL
-        $parsedUrl = parse_url($url);
-        $preview['schema'] = $parsedUrl['scheme'] . '://';
-        $preview['hostname'] = $parsedUrl['host'];
-    
-        // Überprüfe, ob ein Bild vorhanden ist und erhalte die Dimensionen
         if (!empty($preview['image'])) {
-            $imageUrl = $preview['image'];
-            if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+            $imageUrl = $this->absoluteUrl($preview['image'], $url);
+            if ($imageUrl !== false) {
                 $imageSize = @getimagesize($imageUrl);
                 if ($imageSize !== false) {
-                    $preview['imageWidth'] = $imageSize[0];
-                    $preview['imageHeight'] = $imageSize[1];
+                    $preview['image'] = $imageUrl; // Aktualisiere die Bild-URL zu einer absoluten URL
+                    $preview['imageWidth'] = intval($imageSize[0]); // Konvertiere Breite in Ganzzahl
+                    $preview['imageHeight'] = intval($imageSize[1]); // Konvertiere Höhe in Ganzzahl
+                } else {
+                    // Bildabmessungen konnten nicht abgerufen werden, setze Standardabmessungen
+                    $preview['imageWidth'] = 300; // Setze hier die Standardbreite
+                    $preview['imageHeight'] = 200; // Setze hier die Standardhöhe
                 }
+            } else {
+                // Fehler beim Umwandeln der relativen Bild-URL in eine absolute URL
+                unset($preview['image']); // Entferne das Bild, um Fehler zu vermeiden
             }
         }
+        
+        // Hinzufügen der aktuellen Vorschau zu den Cache-Daten
+        $previewEntry = array(
+            "locale" => isset($preview['locale']) ? $preview['locale'] : null,
+            "type" => isset($preview['type']) ? $preview['type'] : null,
+            "title" => isset($preview['title']) ? $preview['title'] : null,
+            "description" => isset($preview['description']) ? $preview['description'] : null,
+            "url" => isset($preview['url']) ? $preview['url'] : null,
+            "site_name" => isset($preview['site_name']) ? $preview['site_name'] : null,
+            "image" => isset($preview['image']) ? $preview['image'] : null,
+            "image:width" => isset($preview['image:width']) ? intval($preview['image:width']) : null,
+            "image:height" => isset($preview['image:height']) ? intval($preview['image:height']) : null,
+            "imageWidth" => isset($preview['imageWidth']) ? $preview['imageWidth'] : null,
+            "imageHeight" => isset($preview['imageHeight']) ? $preview['imageHeight'] : null,
+            "timestamp" => time()
+        );        
+        
+        // Cache-Eintrag hinzufügen
+        $previews[$url] = $previewEntry; // Definiere das Feld 'data'
+        
+        // Cache-Daten in die Datei schreiben
+        file_put_contents($cacheFile, json_encode($previews, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     
         return $preview;
     }
 
+    // Konvertiert eine relative URL in eine absolute URL basierend auf der Basis-URL
+    private function absoluteUrl($relativeUrl, $baseUrl) {
+        $urlParts = parse_url($baseUrl);
+        $scheme = isset($urlParts['scheme']) ? $urlParts['scheme'] . '://' : '';
+        $host = isset($urlParts['host']) ? $urlParts['host'] : '';
+        $port = isset($urlParts['port']) ? ':' . $urlParts['port'] : '';
+        $path = isset($urlParts['path']) ? $urlParts['path'] : '';
+        $path = substr($path, 0, strrpos($path, '/') + 1); // entferne Dateiname aus dem Pfad
+    
+        // Wenn die relative URL bereits eine absolute URL ist, gibt sie einfach zurück
+        if (parse_url($relativeUrl, PHP_URL_SCHEME) != '') return $relativeUrl;
+    
+        // Wenn die relative URL mit einem Slash beginnt, wird sie an den Basis-URL-Pfad angehängt
+        if (substr($relativeUrl, 0, 1) == '/') {
+            return $scheme . $host . $port . $relativeUrl;
+        }
+    
+        // Wenn die relative URL mit Punktpunktschreibweise beginnt, wird sie an den Basis-URL-Pfad angehängt
+        if (substr($relativeUrl, 0, 3) == '../') {
+            while (substr($relativeUrl, 0, 3) == '../') {
+                $path = substr($path, 0, strrpos(rtrim($path, '/'), '/')) . '/';
+                $relativeUrl = substr($relativeUrl, 3);
+            }
+            return $scheme . $host . $port . $path . $relativeUrl;
+        }
+    
+        // Ansonsten wird die relative URL an den Basis-URL-Pfad angehängt
+        return $scheme . $host . $port . $path . $relativeUrl;
+    }
     
     // Handle page extra data
     public function onParsePageExtra($page, $name) {

@@ -2,7 +2,7 @@
 // Linkpreview extension, https://github.com/pftnhr/yellow-linkpreview
 
 class YellowLinkpreview {
-    const VERSION = "0.8.17";
+    const VERSION = "0.8.18";
     public $yellow;         // access to API
 
     // Handle initialisation
@@ -52,7 +52,7 @@ class YellowLinkpreview {
     }
     
     public function getLinkPreview($url) {
-        // Cache-Datei lesen
+        // Read cache file
         $cacheFile = $this->yellow->system->get("coreExtensionDirectory") . "linkpreview.json";
         $previews = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : array();
         
@@ -61,7 +61,7 @@ class YellowLinkpreview {
             return $previews[$url];
         }
 
-        // Mit cURL den HTML-Inhalt der URL abrufen
+        // Retrieve the HTML content of the URL with cURL
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
@@ -76,7 +76,7 @@ class YellowLinkpreview {
         curl_close($curl);
     
         if ($html === false) {
-            return array(); // Rückgabe eines leeren Arrays im Fehlerfall
+            return array(); // Return of an empty array in the event of an error
         }
     
         $doc = new DOMDocument();
@@ -94,9 +94,9 @@ class YellowLinkpreview {
             }
         }
     
-        // Überprüfe, ob Open Graph-Metadaten gefunden wurden
+        // Check whether Open Graph metadata was found
         if (!$ogFound) {
-            // Wenn keine Open Graph-Metadaten gefunden wurden, versuche alternative Metatags zu verwenden
+            // If no Open Graph metadata was found, try using alternative metatags
             $preview['title'] = $doc->getElementsByTagName('title')->item(0)->nodeValue;
             foreach ($metas as $meta) {
                 if ($meta->hasAttribute('name')) {
@@ -113,21 +113,21 @@ class YellowLinkpreview {
             if ($imageUrl !== false) {
                 $imageSize = @getimagesize($imageUrl);
                 if ($imageSize !== false) {
-                    $preview['image'] = $imageUrl; // Aktualisiere die Bild-URL zu einer absoluten URL
-                    $preview['imageWidth'] = intval($imageSize[0]); // Konvertiere Breite in Ganzzahl
-                    $preview['imageHeight'] = intval($imageSize[1]); // Konvertiere Höhe in Ganzzahl
+                    $preview['image'] = $imageUrl;
+                    $preview['imageWidth'] = intval($imageSize[0]); // Convert width to integer
+                    $preview['imageHeight'] = intval($imageSize[1]); // Convert height to integer
                 } else {
-                    // Bildabmessungen konnten nicht abgerufen werden, setze Standardabmessungen
-                    $preview['imageWidth'] = 300; // Setze hier die Standardbreite
-                    $preview['imageHeight'] = 200; // Setze hier die Standardhöhe
+                    // Image dimensions could not be retrieved, set default dimensions
+                    $preview['imageWidth'] = 300; // Set the standard width here
+                    $preview['imageHeight'] = 200; // Set the standard height here
                 }
             } else {
-                // Fehler beim Umwandeln der relativen Bild-URL in eine absolute URL
-                unset($preview['image']); // Entferne das Bild, um Fehler zu vermeiden
+                // Error when converting the relative image URL to an absolute URL
+                unset($preview['image']); // Remove the image to avoid errors
             }
         }
         
-        // Hinzufügen der aktuellen Vorschau zu den Cache-Daten
+        // Adding the current preview to the cache data
         $previewEntry = array(
             "locale" => isset($preview['locale']) ? $preview['locale'] : null,
             "type" => isset($preview['type']) ? $preview['type'] : null,
@@ -144,32 +144,32 @@ class YellowLinkpreview {
         );        
         
         // Cache-Eintrag hinzufügen
-        $previews[$url] = $previewEntry; // Definiere das Feld 'data'
+        $previews[$url] = $previewEntry;
         
-        // Cache-Daten in die Datei schreiben
+        // Write cache data to the file
         file_put_contents($cacheFile, json_encode($previews, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     
         return $preview;
     }
 
-    // Konvertiert eine relative URL in eine absolute URL basierend auf der Basis-URL
+    // Converts a relative URL into an absolute URL based on the base URL
     private function absoluteUrl($relativeUrl, $baseUrl) {
         $urlParts = parse_url($baseUrl);
         $scheme = isset($urlParts['scheme']) ? $urlParts['scheme'] . '://' : '';
         $host = isset($urlParts['host']) ? $urlParts['host'] : '';
         $port = isset($urlParts['port']) ? ':' . $urlParts['port'] : '';
         $path = isset($urlParts['path']) ? $urlParts['path'] : '';
-        $path = substr($path, 0, strrpos($path, '/') + 1); // entferne Dateiname aus dem Pfad
+        $path = substr($path, 0, strrpos($path, '/') + 1); // Remove file name from the path
     
-        // Wenn die relative URL bereits eine absolute URL ist, gibt sie einfach zurück
+        // If the relative URL is already an absolute URL, it simply returns
         if (parse_url($relativeUrl, PHP_URL_SCHEME) != '') return $relativeUrl;
     
-        // Wenn die relative URL mit einem Slash beginnt, wird sie an den Basis-URL-Pfad angehängt
+        // If the relative URL begins with a slash, it is appended to the base URL path
         if (substr($relativeUrl, 0, 1) == '/') {
             return $scheme . $host . $port . $relativeUrl;
         }
     
-        // Wenn die relative URL mit Punktpunktschreibweise beginnt, wird sie an den Basis-URL-Pfad angehängt
+        // If the relative URL begins with dot notation, it is appended to the base URL path
         if (substr($relativeUrl, 0, 3) == '../') {
             while (substr($relativeUrl, 0, 3) == '../') {
                 $path = substr($path, 0, strrpos(rtrim($path, '/'), '/')) . '/';
@@ -178,17 +178,7 @@ class YellowLinkpreview {
             return $scheme . $host . $port . $path . $relativeUrl;
         }
     
-        // Ansonsten wird die relative URL an den Basis-URL-Pfad angehängt
+        // Otherwise, the relative URL is appended to the base URL path
         return $scheme . $host . $port . $path . $relativeUrl;
-    }
-    
-    // Handle page extra data
-    public function onParsePageExtra($page, $name) {
-        $output = null;
-        if ($name=="header") {
-            $extensionLocation = $this->yellow->system->get("coreServerBase").$this->yellow->system->get("coreExtensionLocation");
-            $output = "<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"{$extensionLocation}linkpreview.css\">\n";
-        }
-        return $output;
     }
 }

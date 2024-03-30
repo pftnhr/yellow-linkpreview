@@ -113,7 +113,7 @@ a.linkpreview:hover .linkpreview__content__title {
 
 ### SASS
 
-```sass
+```scss
 .linkpreview {
     align-items: center;
     border: 1px solid rgb(207, 213, 226);

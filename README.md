@@ -16,7 +16,7 @@ The link preview is only generated if it is inserted as a block element. If the 
 
 ### Appearance
 
-You can influence the appearance of the paragraph by adapting the file `system/extensions/linkpreview.css` to your needs.
+You can influence the appearance of the paragraph by adapting the [stylesheet](#stylesheets) to your needs.
 
 ## Examples
 

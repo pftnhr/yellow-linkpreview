@@ -2,7 +2,7 @@
 // Linkpreview extension, https://github.com/pftnhr/yellow-linkpreview
 
 class YellowLinkpreview {
-    const VERSION = "0.8.18";
+    const VERSION = "0.9.1";
     public $yellow;         // access to API
 
     // Handle initialisation
@@ -11,7 +11,7 @@ class YellowLinkpreview {
     }
 
     // Handle page content of shortcut
-    public function onParseContentShortcut($page, $name, $text, $type) {
+    public function onParseContentElement($page, $name, $text, $attributes, $type) {
         $output = null;        
         list($url) = $this->yellow->toolbox->getTextArguments($text);
         if ($name == "linkpreview" && ($type == "block")) {
@@ -53,7 +53,7 @@ class YellowLinkpreview {
     
     public function getLinkPreview($url) {
         // Read cache file
-        $cacheFile = $this->yellow->system->get("coreExtensionDirectory") . "linkpreview.json";
+        $cacheFile = $this->yellow->system->get("CoreExtensionLocation") . "linkpreview.json";
         $previews = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : array();
         
         // Überprüfen, ob der Cache-Eintrag für die URL vorhanden ist und nicht abgelaufen ist

@@ -53,7 +53,7 @@ class YellowLinkpreview {
     
     public function getLinkPreview($url) {
         // Read cache file
-        $cacheFile = $this->yellow->system->get("CoreExtensionLocation") . "linkpreview.json";
+        $cacheFile = $this->yellow->system->get("CoreWorkerLocation") . "linkpreview.json";
         $previews = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : array();
         
         // Überprüfen, ob der Cache-Eintrag für die URL vorhanden ist und nicht abgelaufen ist

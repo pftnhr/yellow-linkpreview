@@ -8,6 +8,7 @@ class YellowLinkpreview {
     // Handle initialisation
     public function onLoad($yellow) {
         $this->yellow = $yellow;
+        $this->yellow->system->setDefault("linkpreviewImageLocation", "/media/linkpreview/");
     }
 
     // Handle page content of shortcut
@@ -53,8 +54,8 @@ class YellowLinkpreview {
     
     public function getLinkPreview($url) {
         // Read cache file
-        $cacheFile = $this->yellow->system->get("CoreWorkerLocation") . "linkpreview.json";
-        $previews = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : array();
+        $cacheFile = $this->yellow->system->get("coreWorkerDirectory") . "linkpreview.json";
+        $previews = file_exists($cacheFile) ? json_decode($this->yellow->toolbox->readFile($cacheFile), true) : array();
         
         // Überprüfen, ob der Cache-Eintrag für die URL vorhanden ist und nicht abgelaufen ist
         if (isset($previews[$url]) && time() - $previews[$url]['timestamp'] <= 86400) {
@@ -147,8 +148,8 @@ class YellowLinkpreview {
         $previews[$url] = $previewEntry;
         
         // Write cache data to the file
-        file_put_contents($cacheFile, json_encode($previews, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-    
+        $this->yellow->toolbox->writeFile($cacheFile, json_encode($previews, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        
         return $preview;
     }
 

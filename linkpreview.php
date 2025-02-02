@@ -37,11 +37,11 @@ class YellowLinkpreview {
             }
             $output .= "<div class=\"linkpreview__content\">";
             if (!empty($linkPreview['site_name'])) {
-                $output .= "<span class=\"linkpreview__content__host\">" . $linkPreview['site_name'] . "</span>";
+                $output .= "<span class=\"linkpreview__content__host\">" . $linkPreview['site_name'] . " </span>";
             }
-            $output .= "<span class=\"linkpreview__content__title\">" . $linkPreview['title'] . "</span>";
+            $output .= "<span class=\"linkpreview__content__title\">" . $linkPreview['title'] . " </span>";
             if (!empty($linkPreview['description'])) {
-                $output .= "<span class=\"linkpreview__content__description\">" . $linkPreview['description'] . "</span>";
+                $output .= "<span class=\"linkpreview__content__description\">" . $linkPreview['description'] . " </span>";
             }
             $output .= "</div>";
             $output .= "</a>";
